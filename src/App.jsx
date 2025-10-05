@@ -10,6 +10,8 @@ import { Separator } from '@/components/ui/separator.jsx'
 import { MapPin, Clock, Phone, Star, ChefHat, Utensils, Search, Menu, X, ShoppingCart, Plus, Minus, Trash2, CreditCard, QrCode, Loader2 } from 'lucide-react'
 import './App.css'
 
+const API_BASE_URL = "https://5000-if91y01157ipu82jx6cm3-f62562f1.manusvm.computer/api";
+
 function App() {
   const [activeSection, setActiveSection] = useState('home')
   const [searchTerm, setSearchTerm] = useState('')
@@ -250,9 +252,7 @@ function App() {
         issuer_id: cardFormData.issuerId,
         identification_type: cardFormData.identificationType,
         identification_number: cardFormData.identificationNumber
-      }
-
-      const response = await fetch('/api/process_card_payment', {
+      }      const response = await fetch(`${API_BASE_URL}/process_card_payment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -295,9 +295,7 @@ function App() {
         customer_data: customerData,
         items: cart,
         subtotal: getCartTotal()
-      }
-
-      const response = await fetch('/api/generate_pix_payment', {
+      }      const response = await fetch(`${API_BASE_URL}/generate_pix_payment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
