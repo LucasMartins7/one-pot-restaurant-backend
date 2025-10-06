@@ -10,7 +10,7 @@ import { Separator } from '@/components/ui/separator.jsx'
 import { MapPin, Clock, Phone, Star, ChefHat, Utensils, Search, Menu, X, ShoppingCart, Plus, Minus, Trash2, CreditCard, QrCode, Loader2 } from 'lucide-react'
 import './App.css'
 
-const API_BASE_URL = "/api";
+const API_BASE_URL = "https://kkh7ikc767x1.manus.space/api";
 
 function App() {
   const [activeSection, setActiveSection] = useState('home')
