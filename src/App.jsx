@@ -753,18 +753,20 @@ function App() {
                   )}
                 </Button>
               )}
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => {
-                  const whatsappMessage = formatWhatsAppMessage()
-                  const whatsappUrl = `https://wa.me/5511999999999?text=${whatsappMessage}`
-                  window.open(whatsappUrl, 
-                  '_blank')
-                }}
-              >
-                Ou Enviar via WhatsApp
-              </Button>
+              {paymentMethod !== 'pix' && (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    const whatsappMessage = formatWhatsAppMessage()
+                    const whatsappUrl = `https://wa.me/5511999999999?text=${whatsappMessage}`
+                    window.open(whatsappUrl, 
+                    '_blank')
+                  }}
+                >
+                  Ou Enviar via WhatsApp
+                </Button>
+              )}
               
               <p className="text-xs text-gray-500 text-center">
                 Pagamentos processados com segurança pelo Mercado Pago
