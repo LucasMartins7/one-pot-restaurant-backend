@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator.jsx'
 import { MapPin, Clock, Phone, Star, ChefHat, Utensils, Search, Menu, X, ShoppingCart, Plus, Minus, Trash2, CreditCard, QrCode, Loader2 } from 'lucide-react'
 import './App.css'
-const API_BASE_URL = 'https://qjh9iec7q3k7.manus.space'
+const API_BASE_URL = 'https://9yhyi3cpen98.manus.space'
 
 function App() {
   const [activeSection, setActiveSection] = useState('home')
