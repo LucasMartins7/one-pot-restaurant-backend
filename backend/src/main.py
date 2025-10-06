@@ -5,7 +5,7 @@ import mercadopago
 import os
 
 app = Flask(__name__)
-CORS(app) # Enable CORS for all routes
+CORS(app, origins=["https://onepot-fywhsy.manus.space", "http://localhost:5173"]) # Enable CORS for frontend domains
 
 # Initialize Mercado Pago SDK
 # Replace with your actual access token from environment variables
