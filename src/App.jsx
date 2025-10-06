@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator.jsx'
 import { MapPin, Clock, Phone, Star, ChefHat, Utensils, Search, Menu, X, ShoppingCart, Plus, Minus, Trash2, CreditCard, QrCode, Loader2 } from 'lucide-react'
 import './App.css'
-const API_BASE_URL = 'https://0vhlizcgmvnw.manus.space'
+const API_BASE_URL = 'https://qjh9iec7q3k7.manus.space'
 
 function App() {
   const [activeSection, setActiveSection] = useState('home')
@@ -305,7 +305,7 @@ function App() {
         items: cart,
         subtotal: getCartTotal()
       };
-      const response = await fetch(`${API_BASE_URL}/generate_pix_payment`, {
+      const response = await fetch(`${API_BASE_URL}/api/generate_pix_payment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
