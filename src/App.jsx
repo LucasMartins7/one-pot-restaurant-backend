@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator.jsx'
 import { MapPin, Clock, Phone, Star, ChefHat, Utensils, Search, Menu, X, ShoppingCart, Plus, Minus, Trash2, CreditCard, QrCode, Loader2 } from 'lucide-react'
 import './App.css'
-const API_BASE_URL = 'https://9yhyi3cpen98.manus.space'
+const API_BASE_URL = 'https://vgh0i1c1d3kl.manus.space'
 
 function App() {
   const [activeSection, setActiveSection] = useState('home')
@@ -251,14 +251,13 @@ function App() {
 
     try {
       const paymentData = {
-        ...formData,
         customer_data: customerData,
         items: cart,
-        subtotal: getCartTotal(),
-        delivery_fee: calculateDeliveryFee(customerData.cep)
+        subtotal: getCartTotal() + calculateDeliveryFee(customerData.cep),
+        card_data: formData
       }
 
-      const response = await fetch(`${API_BASE_URL}/process_card_payment`, {
+      const response = await fetch(`${API_BASE_URL}/api/process_card_payment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -752,7 +751,32 @@ function App() {
                   )}
                 </Button>
               )}
-              {paymentMethod !== 'pix' && (
+              
+              {paymentMethod === 'credit_card' && (
+                <Button
+                  className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
+                  onClick={() => {
+                    if (cardPaymentBrickController) {
+                      cardPaymentBrickController.getFormData()
+                        .then((cardFormData) => {
+                          // The Card Payment Brick will handle the submission through its onSubmit callback
+                          console.log('Card form data retrieved:', cardFormData)
+                        })
+                        .catch((error) => {
+                          console.error('Error getting card form data:', error)
+                        })
+                    }
+                  }}
+                  disabled={isProcessingPayment || cart.length === 0}
+                >
+                  {isProcessingPayment ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processando...</>
+                  ) : (
+                    "Finalizar Pagamento"
+                  )}
+                </Button>
+              )}
+              {paymentMethod !== 'pix' && paymentMethod !== 'credit_card' && (
                 <Button
                   variant="outline"
                   className="w-full"
