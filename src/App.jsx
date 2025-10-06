@@ -276,6 +276,16 @@ function App() {
           total: result.total
         })
         setCart([])
+        setActiveSection('home')
+        setShowCart(false)
+        setShowCheckout(false)
+        setPaymentMethod('')
+        
+        // Show success message
+        setTimeout(() => {
+          alert('🎉 Pagamento aprovado! Seu pedido está sendo preparado e chegará em breve.')
+        }, 500)
+        
         resolve()
       } else {
         setPaymentResult({
@@ -324,6 +334,15 @@ function App() {
           expirationDate: result.expiration_date
         })
         setCart([])
+        setActiveSection('home')
+        setShowCart(false)
+        setShowCheckout(false)
+        setPaymentMethod('')
+        
+        // Show success message for PIX
+        setTimeout(() => {
+          alert('🎉 PIX gerado com sucesso! Após o pagamento, seu pedido será preparado e chegará em breve.')
+        }, 500)
       } else {
         setPaymentResult({
           success: false,
