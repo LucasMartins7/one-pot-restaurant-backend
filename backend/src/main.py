@@ -9,9 +9,7 @@ CORS(app) # Enable CORS for all routes
 
 # Initialize Mercado Pago SDK
 # Replace with your actual access token from environment variables
-MP_ACCESS_TOKEN = os.environ.get("MP_ACCESS_TOKEN")
-if not MP_ACCESS_TOKEN:
-    raise ValueError("MP_ACCESS_TOKEN environment variable not set.")
+MP_ACCESS_TOKEN = "TEST-3110328722128258-100514-63e7dc670655b03344e180477a3d5da3-190968069"
 
 mp = mercadopago.SDK(MP_ACCESS_TOKEN)
 
