@@ -55,12 +55,11 @@ def generate_pix_payment():
             qr_code_base64 = None
             pix_code = None
             
-            for field in payment["point_of_interaction"]["transaction_data"]["qr_code_base64"]:
-                if field["type"] == "image/png":
-                    qr_code_base64 = field["value"]
-                    break
-            
-            pix_code = payment["point_of_interaction"]["transaction_data"]["qr_code"]
+            # Extract PIX data from payment response
+            if "point_of_interaction" in payment and payment["point_of_interaction"]:
+                transaction_data = payment["point_of_interaction"].get("transaction_data", {})
+                pix_code = transaction_data.get("qr_code")
+                qr_code_base64 = transaction_data.get("qr_code_base64")
 
             return jsonify({
                 "success": True,
@@ -70,7 +69,7 @@ def generate_pix_payment():
                 "total": payment["transaction_amount"],
                 "pix_code": pix_code,
                 "pix_qr_base64": qr_code_base64,
-                "expiration_date": payment["date_of_expiration"]
+                "expiration_date": payment.get("date_of_expiration")
             }), 201
         else:
             return jsonify({"success": False, "error": payment.get("message", "Erro ao criar pagamento PIX"), "details": payment}), payment_response["status"]
