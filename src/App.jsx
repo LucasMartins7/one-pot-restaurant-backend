@@ -10,7 +10,7 @@ import { Separator } from '@/components/ui/separator.jsx'
 import { MapPin, Clock, Phone, Star, ChefHat, Utensils, Search, Menu, X, ShoppingCart, Plus, Minus, Trash2, CreditCard, QrCode, Loader2 } from 'lucide-react'
 import './App.css'
 
-const API_BASE_URL = "https://5000-if91y01157ipu82jx6cm3-f62562f1.manusvm.computer/api";
+const API_BASE_URL = "/api";
 
 function App() {
   const [activeSection, setActiveSection] = useState('home')
@@ -40,14 +40,17 @@ function App() {
 
   // Configuração do Mercado Pago
   const [mp, setMp] = useState(null)
-  const [cardForm, setCardForm] = useState(null)
+  const [bricksBuilder, setBricksBuilder] = useState(null)
+  const [cardPaymentBrickController, setCardPaymentBrickController] = useState(null)
 
   useEffect(() => {
     // Inicializar MercadoPago.js
     const script = document.createElement('script')
     script.src = 'https://sdk.mercadopago.com/js/v2'
     script.onload = () => {
-      const mercadoPago = new window.MercadoPago('TEST-4ff5c710-5029-4b9f-8a5b-2c2c8f2f8f2f') // Substitua pela sua PUBLIC_KEY
+      console.log('MercadoPago SDK loaded')
+      const mercadoPago = new window.MercadoPago('TEST-ae034fa4-581f-4e04-a922-4fcf697872f4')
+      console.log('MercadoPago instance created:', mercadoPago)
       setMp(mercadoPago)
     }
     document.body.appendChild(script)
@@ -56,6 +59,13 @@ function App() {
       document.body.removeChild(script)
     }
   }, [])
+
+  // Inicializar Bricks quando mp estiver disponível
+  useEffect(() => {
+    if (mp) {
+      initializeBricks()
+    }
+  }, [mp])
 
   const menuItems = {
     arrozes: [
@@ -161,98 +171,95 @@ function App() {
     setCustomerData(prev => ({ ...prev, [field]: value }))
   }
 
-  const initializeCardForm = () => {
-    if (!mp || cardForm) return
+  const initializeBricks = async () => {
+    if (!mp) {
+      console.log('MP not available for Bricks initialization')
+      return
+    }
 
-    const newCardForm = mp.cardForm({
-      amount: (getCartTotal() + calculateDeliveryFee(customerData.cep)).toString(),
-      iframe: true,
-      form: {
-        id: "form-checkout",
-        cardNumber: {
-          id: "form-checkout__cardNumber",
-          placeholder: "Número do Cartão",
-        },
-        expirationDate: {
-          id: "form-checkout__expirationDate",
-          placeholder: "MM/AA",
-        },
-        securityCode: {
-          id: "form-checkout__securityCode",
-          placeholder: "Código de Segurança",
-        },
-        cardholderName: {
-          id: "form-checkout__cardholderName",
-          placeholder: "Nome do Portador",
-        },
-        issuer: {
-          id: "form-checkout__issuer",
-          placeholder: "Banco Emissor",
-        },
-        installments: {
-          id: "form-checkout__installments",
-          placeholder: "Parcelas",
-        },
-        identificationType: {
-          id: "form-checkout__identificationType",
-          placeholder: "Tipo de Documento",
-        },
-        identificationNumber: {
-          id: "form-checkout__identificationNumber",
-          placeholder: "Número do Documento",
-        },
-        cardholderEmail: {
-          id: "form-checkout__cardholderEmail",
-          placeholder: "Email",
-        },
-      },
-      callbacks: {
-        onFormMounted: error => {
-          if (error) return console.warn("Form Mounted handling error: ", error)
-          console.log("Form mounted")
-        },
-        onSubmit: event => {
-          event.preventDefault()
-          handleCardPayment()
-        },
-        onFetching: (resource) => {
-          console.log("Fetching resource: ", resource)
-          const progressBar = document.querySelector(".progress-bar")
-          if (progressBar) {
-            progressBar.removeAttribute("value")
-            return () => {
-              progressBar.setAttribute("value", "0")
-            }
-          }
-        }
-      },
-    })
-
-    setCardForm(newCardForm)
+    try {
+      console.log('Initializing Bricks with MP:', mp)
+      const builder = mp.bricks()
+      console.log('Bricks builder created:', builder)
+      setBricksBuilder(builder)
+    } catch (error) {
+      console.error('Error initializing Bricks:', error)
+    }
   }
 
-  const handleCardPayment = async () => {
-    if (!cardForm) return
+  const renderCardPaymentBrick = async () => {
+    if (!bricksBuilder) {
+      console.log('BricksBuilder not available for rendering')
+      return
+    }
 
+    try {
+      console.log('Starting Card Payment Brick rendering...')
+      
+      // Destroy existing brick if it exists
+      if (cardPaymentBrickController) {
+        console.log('Destroying existing brick controller')
+        cardPaymentBrickController.unmount()
+      }
+
+      // Check if container exists
+      const container = document.getElementById('cardPaymentBrick_container')
+      if (!container) {
+        console.error('Container cardPaymentBrick_container not found')
+        return
+      }
+      console.log('Container found:', container)
+
+      const totalAmount = getCartTotal() + calculateDeliveryFee(customerData.cep)
+      console.log('Total amount for brick:', totalAmount)
+
+      const settings = {
+        initialization: {
+          amount: totalAmount,
+        },
+        callbacks: {
+          onReady: () => {
+            console.log('Card Payment Brick ready')
+          },
+          onSubmit: (formData) => {
+            console.log('Card Payment Brick submitted with data:', formData)
+            return new Promise((resolve, reject) => {
+              handleCardPaymentBrick(formData, resolve, reject)
+            })
+          },
+          onError: (error) => {
+            console.error('Card Payment Brick error:', error)
+          },
+        },
+      }
+
+      console.log('Creating brick with settings:', settings)
+      const controller = await bricksBuilder.create(
+        'cardPayment',
+        'cardPaymentBrick_container',
+        settings,
+      )
+      
+      console.log('Brick controller created:', controller)
+      setCardPaymentBrickController(controller)
+    } catch (error) {
+      console.error('Error rendering Card Payment Brick:', error)
+    }
+  }
+
+  const handleCardPaymentBrick = async (formData, resolve, reject) => {
     setIsProcessingPayment(true)
 
     try {
-      const cardFormData = cardForm.getCardFormData()
-
       const paymentData = {
-        token: cardFormData.token,
-        customer_data: {
-          ...customerData,
-          email: cardFormData.cardholderEmail || customerData.email
-        },
+        ...formData,
+        customer_data: customerData,
         items: cart,
         subtotal: getCartTotal(),
-        installments: cardFormData.installments,
-        payment_method_id: cardFormData.paymentMethodId,
-        issuer_id: cardFormData.issuerId,
-        identification_type: cardFormData.identificationType,
-        identification_number: cardFormData.identificationNumber
-      }      const response = await fetch(`${API_BASE_URL}/process_card_payment`, {
+        delivery_fee: calculateDeliveryFee(customerData.cep)
+      }
+
+      const response = await fetch(`${API_BASE_URL}/process_card_payment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -271,17 +278,20 @@ function App() {
           total: result.total
         })
         setCart([])
+        resolve()
       } else {
         setPaymentResult({
           success: false,
           error: result.error || 'Erro ao processar pagamento'
         })
+        reject()
       }
     } catch (error) {
       setPaymentResult({
         success: false,
         error: 'Erro de conexão com o servidor'
       })
+      reject()
     } finally {
       setIsProcessingPayment(false)
     }
@@ -295,7 +305,8 @@ function App() {
         customer_data: customerData,
         items: cart,
         subtotal: getCartTotal()
-      }      const response = await fetch(`${API_BASE_URL}/generate_pix_payment`, {
+      };
+      const response = await fetch(`${API_BASE_URL}/generate_pix_payment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -350,20 +361,8 @@ function App() {
     if (paymentMethod === 'pix') {
       handlePixPayment()
     } else if (paymentMethod === 'credit_card') {
-      if (!cardForm) {
-        initializeCardForm()
-        setTimeout(() => {
-          const form = document.getElementById('form-checkout')
-          if (form) {
-            form.dispatchEvent(new Event('submit'))
-          }
-        }, 1000)
-      } else {
-        const form = document.getElementById('form-checkout')
-        if (form) {
-          form.dispatchEvent(new Event('submit'))
-        }
-      }
+      // Card Payment Brick handles submission automatically
+      console.log('Card payment will be handled by the Brick')
     }
   }
 
@@ -670,7 +669,13 @@ function App() {
                     variant={paymentMethod === 'credit_card' ? 'default' : 'outline'}
                     onClick={() => {
                       setPaymentMethod('credit_card')
-                      setTimeout(initializeCardForm, 100)
+                      if (!bricksBuilder) {
+                        initializeBricks().then(() => {
+                          setTimeout(renderCardPaymentBrick, 100)
+                        })
+                      } else {
+                        setTimeout(renderCardPaymentBrick, 100)
+                      }
                     }}
                     className="flex items-center gap-2"
                   >
@@ -688,32 +693,11 @@ function App() {
                 </div>
               </div>
 
-              {/* Formulário do Cartão */}
+              {/* Card Payment Brick */}
               {paymentMethod === 'credit_card' && (
                 <div className="space-y-4 p-4 border rounded-lg">
                   <h4 className="font-semibold">Dados do Cartão</h4>
-                  <form id="form-checkout">
-                    <div className="space-y-3">
-                      <div id="form-checkout__cardNumber" className="border rounded p-2"></div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div id="form-checkout__expirationDate" className="border rounded p-2"></div>
-                        <div id="form-checkout__securityCode" className="border rounded p-2"></div>
-                      </div>
-                      <input type="text" id="form-checkout__cardholderName" placeholder="Nome do portador" className="w-full border rounded p-2" />
-                      <select id="form-checkout__issuer" className="w-full border rounded p-2">
-                        <option>Banco emissor</option>
-                      </select>
-                      <select id="form-checkout__installments" className="w-full border rounded p-2">
-                        <option>Parcelas</option>
-                      </select>
-                      <select id="form-checkout__identificationType" className="w-full border rounded p-2">
-                        <option>Tipo de documento</option>
-                      </select>
-                      <input type="text" id="form-checkout__identificationNumber" placeholder="Número do documento" className="w-full border rounded p-2" />
-                      <input type="email" id="form-checkout__cardholderEmail" placeholder="Email" className="w-full border rounded p-2" />
-                    </div>
-                    <progress value="0" className="progress-bar w-full mt-2">Carregando...</progress>
-                  </form>
+                  <div id="cardPaymentBrick_container"></div>
                 </div>
               )}
             </div>
@@ -753,28 +737,30 @@ function App() {
                 </div>
               </div>
               
-              <Button
-                className="w-full bg-green-600 hover:bg-green-700 text-white"
-                onClick={handleOrderSubmit}
-                disabled={isProcessingPayment}
-              >
-                {isProcessingPayment ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Processando...
-                  </>
-                ) : (
-                  paymentMethod === 'pix' ? 'Gerar PIX' : 'Processar Pagamento'
-                )}
-              </Button>
+
+
               
+              {paymentMethod === 'pix' && (
+                <Button
+                  className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
+                  onClick={handleOrderSubmit}
+                  disabled={isProcessingPayment || cart.length === 0}
+                >
+                  {isProcessingPayment ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processando...</>
+                  ) : (
+                    "Processar Pagamento"
+                  )}
+                </Button>
+              )}
               <Button
                 variant="outline"
                 className="w-full"
                 onClick={() => {
                   const whatsappMessage = formatWhatsAppMessage()
                   const whatsappUrl = `https://wa.me/5511999999999?text=${whatsappMessage}`
-                  window.open(whatsappUrl, '_blank')
+                  window.open(whatsappUrl, 
+                  '_blank')
                 }}
               >
                 Ou Enviar via WhatsApp
@@ -1311,3 +1297,5 @@ function App() {
 }
 
 export default App
+
+
