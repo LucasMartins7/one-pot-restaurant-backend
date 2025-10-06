@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: one-pot-backend
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: cd src && python main.py
+    envVars:
+      - key: MP_ACCESS_TOKEN
+        value: TEST-3110328722128258-100514-63e7dc670655b03344e180477a3d5da3-190968069
+      - key: MP_PUBLIC_KEY
+        value: TEST-ae034fa4-581f-4e04-a922-4fcf697872f4
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+
+databases:
+  - name: one-pot-db
+    databaseName: onepot_db
+    user: onepot_user
