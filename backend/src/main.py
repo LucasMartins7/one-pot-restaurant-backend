@@ -78,6 +78,61 @@ def generate_pix_payment():
         app.logger.error(f"Error processing PIX payment: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
+@app.route("/api/process_card_payment", methods=["POST"])
+def process_card_payment():
+    try:
+        data = request.get_json()
+        items = data.get("items")
+        customer_data = data.get("customer_data")
+        subtotal = data.get("subtotal")
+        card_data = data.get("card_data")
+
+        if not all([items, customer_data, subtotal, card_data]):
+            return jsonify({"success": False, "error": "Missing required data"}), 400
+
+        # Prepare payment data for Mercado Pago
+        payment_data = {
+            "transaction_amount": float(subtotal),
+            "description": "Pedido One Pot Paulista",
+            "payment_method_id": card_data.get("payment_method_id"),
+            "token": card_data.get("token"),
+            "installments": card_data.get("installments", 1),
+            "payer": {
+                "email": customer_data.get("email", "test_user@example.com"),
+                "first_name": customer_data.get("name", "Test").split(" ")[0],
+                "last_name": "User",
+                "identification": {
+                    "type": "CPF",
+                    "number": "11111111111"
+                },
+                "address": {
+                    "zip_code": customer_data.get("cep", "00000000"),
+                    "street_name": customer_data.get("address", "Rua Teste"),
+                    "street_number": customer_data.get("number", "123")
+                }
+            }
+        }
+
+        # Create payment
+        payment_response = mp.payment().create(payment_data)
+        payment = payment_response["response"]
+
+        if payment_response["status"] == 201:
+            return jsonify({
+                "success": True,
+                "order_id": payment["id"],
+                "payment_id": payment["id"],
+                "status": payment["status"],
+                "total": payment["transaction_amount"],
+                "status_detail": payment.get("status_detail")
+            }), 201
+        else:
+            return jsonify({"success": False, "error": payment.get("message", "Erro ao processar pagamento"), "details": payment}), payment_response["status"]
+
+    except Exception as e:
+        app.logger.error(f"Error processing card payment: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
 
